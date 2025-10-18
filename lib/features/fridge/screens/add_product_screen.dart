@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../shared/constants.dart';
 import '../models/product.dart';
-import '../../shared/constants.dart';
 
 class AddProductScreen extends StatefulWidget {
   final Function(Product) onSave;

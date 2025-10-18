@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'features/fridge/fridge_container.dart';
 
 class MyApp extends StatelessWidget {
@@ -8,12 +7,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Виртуальный холодильник',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        ),
-        home: const FridgeContainer(),
-        debugShowCheckedModeBanner: false
+      title: 'Виртуальный холодильник',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
+      home: const FridgeContainer(),
     );
   }
 }
