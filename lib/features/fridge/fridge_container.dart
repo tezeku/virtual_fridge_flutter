@@ -123,7 +123,10 @@ class _FridgeContainerState extends State<FridgeContainer> {
           totalCalories: _dailyCalories[0],
         );
       case FridgeScreenType.addProduct:
-        return AddProductScreen(onSave: _addProduct);
+        return AddProductScreen(
+            onSave: _addProduct,
+            onCancel: _showFridge,
+        );
     }
   }
 }

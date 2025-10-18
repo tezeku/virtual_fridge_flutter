@@ -5,8 +5,9 @@ import '../models/product.dart';
 
 class AddProductScreen extends StatefulWidget {
   final Function(Product) onSave;
+  final VoidCallback onCancel;
 
-  const AddProductScreen({super.key, required this.onSave});
+  const AddProductScreen({super.key, required this.onSave, required this.onCancel});
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -78,6 +79,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Добавить продукт'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: widget.onCancel,
+          tooltip: 'Назад',
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
