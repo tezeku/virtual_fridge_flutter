@@ -1,7 +1,6 @@
 name: my_flutter_project
 description: "A new MyFlutter project."
 publish_to: 'none'
-
 version: 1.0.0+1
 
 environment:
@@ -11,7 +10,6 @@ dependencies:
   flutter:
     sdk: flutter
   intl: ^0.18.1
-
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
