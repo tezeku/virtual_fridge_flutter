@@ -68,7 +68,7 @@ class FridgeScreen extends StatelessWidget {
                   children: [
                     _StatCard(
                       title: 'Калории',
-                      value: '${totalCalories.toStringAsFixed(0)}',
+                      value: totalCalories.toStringAsFixed(0),
                       unit: 'ккал',
                       icon: Icons.local_fire_department,
                       color: Colors.orange,

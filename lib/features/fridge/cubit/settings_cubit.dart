@@ -1,11 +1,12 @@
-import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsState {
   final bool expiryNotifications;
   final bool dailyReports;
   final String measurementSystem;
   final String themeMode;
+  final bool autoGenerateShoppingList;
   final String? errorMessage;
   final bool isLoading;
 
@@ -14,8 +15,9 @@ class SettingsState {
     required this.dailyReports,
     required this.measurementSystem,
     required this.themeMode,
-    this.errorMessage,
+    required this.autoGenerateShoppingList,
     required this.isLoading,
+    this.errorMessage,
   });
 
   factory SettingsState.initial() {
@@ -24,8 +26,9 @@ class SettingsState {
       dailyReports: false,
       measurementSystem: 'metric',
       themeMode: 'system',
+      autoGenerateShoppingList: true,
       errorMessage: null,
-      isLoading: false,
+      isLoading: true,
     );
   }
 
@@ -34,6 +37,7 @@ class SettingsState {
     bool? dailyReports,
     String? measurementSystem,
     String? themeMode,
+    bool? autoGenerateShoppingList,
     String? errorMessage,
     bool? isLoading,
   }) {
@@ -42,48 +46,107 @@ class SettingsState {
       dailyReports: dailyReports ?? this.dailyReports,
       measurementSystem: measurementSystem ?? this.measurementSystem,
       themeMode: themeMode ?? this.themeMode,
-      errorMessage: errorMessage ?? this.errorMessage,
+      autoGenerateShoppingList:
+          autoGenerateShoppingList ?? this.autoGenerateShoppingList,
+      errorMessage: errorMessage,
       isLoading: isLoading ?? this.isLoading,
     );
   }
 }
 
 class SettingsCubit extends Cubit<SettingsState> {
+  static const _kExpiryNotificationsKey = 'settings_expiry_notifications_v1';
+  static const _kDailyReportsKey = 'settings_daily_reports_v1';
+  static const _kMeasurementSystemKey = 'settings_measurement_system_v1';
+  static const _kThemeModeKey = 'settings_theme_mode_v1';
+  static const _kAutoShoppingKey = 'settings_auto_shopping_list_v1';
+
   SettingsCubit() : super(SettingsState.initial());
 
-  void toggleExpiryNotifications(bool value) {
-    emit(state.copyWith(expiryNotifications: value));
+  Future<void> init() async {
+    try {
+      emit(state.copyWith(isLoading: true, errorMessage: null));
+      final prefs = await SharedPreferences.getInstance();
+
+      emit(SettingsState(
+        expiryNotifications:
+            prefs.getBool(_kExpiryNotificationsKey) ?? true,
+        dailyReports: prefs.getBool(_kDailyReportsKey) ?? false,
+        measurementSystem:
+            prefs.getString(_kMeasurementSystemKey) ?? 'metric',
+        themeMode: prefs.getString(_kThemeModeKey) ?? 'system',
+        autoGenerateShoppingList: prefs.getBool(_kAutoShoppingKey) ?? true,
+        isLoading: false,
+        errorMessage: null,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
+        errorMessage: 'Не удалось загрузить настройки: $e',
+      ));
+    }
   }
 
-  void toggleDailyReports(bool value) {
-    emit(state.copyWith(dailyReports: value));
+  Future<void> toggleExpiryNotifications(bool value) async {
+    emit(state.copyWith(expiryNotifications: value, errorMessage: null));
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kExpiryNotificationsKey, value);
   }
 
-  void setMeasurementSystem(String system) {
+  Future<void> toggleDailyReports(bool value) async {
+    emit(state.copyWith(dailyReports: value, errorMessage: null));
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kDailyReportsKey, value);
+  }
+
+  Future<void> setMeasurementSystem(String system) async {
     if (system != 'metric' && system != 'imperial') {
-      emit(state.copyWith(
-        errorMessage: 'Некорректная система измерения',
-      ));
+      emit(state.copyWith(errorMessage: 'Некорректная система измерения'));
       return;
     }
-    emit(state.copyWith(measurementSystem: system));
+    emit(state.copyWith(measurementSystem: system, errorMessage: null));
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kMeasurementSystemKey, system);
   }
 
-  void setThemeMode(String mode) {
+  Future<void> setThemeMode(String mode) async {
     if (mode != 'light' && mode != 'dark' && mode != 'system') {
-      emit(state.copyWith(
-        errorMessage: 'Некорректный режим темы',
-      ));
+      emit(state.copyWith(errorMessage: 'Некорректный режим темы'));
       return;
     }
-    emit(state.copyWith(themeMode: mode));
+    emit(state.copyWith(themeMode: mode, errorMessage: null));
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kThemeModeKey, mode);
+  }
+
+  Future<void> toggleAutoGenerateShoppingList(bool value) async {
+    emit(state.copyWith(autoGenerateShoppingList: value, errorMessage: null));
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kAutoShoppingKey, value);
   }
 
   void clearError() {
     emit(state.copyWith(errorMessage: null));
   }
 
-  void resetToDefaults() {
-    emit(SettingsState.initial());
+  Future<void> resetToDefaults() async {
+    const defaults = SettingsState(
+      expiryNotifications: true,
+      dailyReports: false,
+      measurementSystem: 'metric',
+      themeMode: 'system',
+      autoGenerateShoppingList: true,
+      errorMessage: null,
+      isLoading: false,
+    );
+
+    emit(defaults);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kExpiryNotificationsKey, defaults.expiryNotifications);
+    await prefs.setBool(_kDailyReportsKey, defaults.dailyReports);
+    await prefs.setString(_kMeasurementSystemKey, defaults.measurementSystem);
+    await prefs.setString(_kThemeModeKey, defaults.themeMode);
+    await prefs.setBool(_kAutoShoppingKey, defaults.autoGenerateShoppingList);
   }
 }

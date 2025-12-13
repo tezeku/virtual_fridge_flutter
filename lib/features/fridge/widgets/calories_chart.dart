@@ -53,7 +53,7 @@ class CaloriesChart extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withValues(alpha: 0.2),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -164,8 +164,8 @@ class CaloriesChart extends StatelessWidget {
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          chartColor.withOpacity(0.3),
-                          chartColor.withOpacity(0.1),
+                          chartColor.withValues(alpha: 0.3),
+                          chartColor.withValues(alpha: 0.1),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,

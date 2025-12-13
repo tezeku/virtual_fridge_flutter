@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'app_router.dart';
 import 'features/auth/auth_cubit.dart';
-import 'features/fridge/fridge_data_provider.dart';
+import 'features/fridge/cubit/fridge_cubit.dart';
+import 'features/fridge/cubit/settings_cubit.dart';
+import 'features/fridge/cubit/shopping_cubit.dart';
 
 class VirtualFridgeApp extends StatelessWidget {
   const VirtualFridgeApp({super.key});
@@ -12,35 +15,36 @@ class VirtualFridgeApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => AuthCubit()),
+        BlocProvider(create: (_) => FridgeCubit()..init()),
+        BlocProvider(create: (_) => ShoppingCubit()..init()),
+        BlocProvider(create: (_) => SettingsCubit()..init()),
       ],
-      child: FridgeDataScope(
-        child: MaterialApp.router(
-          title: 'Виртуальный холодильник',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-            useMaterial3: true,
-            appBarTheme: const AppBarTheme(
-              centerTitle: true,
-              elevation: 2,
-            ),
-            inputDecorationTheme: const InputDecorationTheme(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            ),
+      child: MaterialApp.router(
+        title: 'Виртуальный холодильник',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          useMaterial3: true,
+          appBarTheme: const AppBarTheme(
+            centerTitle: true,
+            elevation: 2,
           ),
-          darkTheme: ThemeData.dark().copyWith(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.blue,
-              brightness: Brightness.dark,
-            ),
-            appBarTheme: const AppBarTheme(
-              centerTitle: true,
-              elevation: 2,
-            ),
+          inputDecorationTheme: const InputDecorationTheme(
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           ),
-          routerConfig: AppRouter().router,
-          debugShowCheckedModeBanner: false,
         ),
+        darkTheme: ThemeData.dark().copyWith(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.blue,
+            brightness: Brightness.dark,
+          ),
+          appBarTheme: const AppBarTheme(
+            centerTitle: true,
+            elevation: 2,
+          ),
+        ),
+        routerConfig: AppRouter().router,
+        debugShowCheckedModeBanner: false,
       ),
     );
   }
