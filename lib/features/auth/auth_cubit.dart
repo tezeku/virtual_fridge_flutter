@@ -5,14 +5,20 @@ import 'auth_state.dart';
 class AuthCubit extends Cubit<AuthState> {
   AuthCubit() : super(AuthState.initial());
 
+  static final Map<String, String> _demoUsers = {
+    'demo': 'demo123',
+    'admin': 'admin123',
+    'user': 'user123',
+  };
+
   Future<void> login(String username, String password) async {
     emit(state.copyWith(isLoading: true, errorMessage: ''));
 
     try {
       await Future.delayed(const Duration(seconds: 1));
 
-      // Демо-логика: любой непустой логин/пароль
-      if (username.isNotEmpty && password.isNotEmpty) {
+      if (_demoUsers.containsKey(username) &&
+          _demoUsers[username] == password) {
         emit(AuthState.authenticated(username: username));
       } else {
         emit(state.copyWith(
@@ -34,5 +40,9 @@ class AuthCubit extends Cubit<AuthState> {
 
   void clearError() {
     emit(state.copyWith(errorMessage: ''));
+  }
+
+  bool isSessionValid() {
+    return state.isSessionValid;
   }
 }

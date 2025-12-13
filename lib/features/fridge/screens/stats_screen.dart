@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../../shared/constants.dart';
-import '../models/product.dart';
+import '../../../shared/app_colors.dart';
 import '../widgets/calories_chart.dart';
 import '../fridge_data_provider.dart';
+import '../cubit/stats_cubit.dart';
 
 class StatsScreen extends StatelessWidget {
   const StatsScreen({super.key});
@@ -18,190 +19,275 @@ class StatsScreen extends StatelessWidget {
       );
     }
 
-    final products = provider.products;
-    final dailyCalories = provider.dailyCalories;
-
-    if (products.isEmpty) {
-      return Scaffold(
+    return BlocProvider(
+      create: (context) => StatsCubit(
+        products: provider.products,
+        dailyCalories: provider.dailyCalories,
+      ),
+      child: Scaffold(
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context),
           ),
           title: const Text('Статистика'),
-        ),
-        body: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.analytics, size: 64, color: Colors.grey),
-              SizedBox(height: 16),
-              Text('Нет данных для статистики'),
-              Text('Добавьте продукты в холодильник'),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final categoryStats = _calculateCategoryStats(products);
-    final expiredCount = products.where((p) => p.isExpired).length;
-    final expiringCount = products.where((p) => p.isExpiringSoon).length;
-    final freshCount = products.length - expiredCount - expiringCount;
-    final weeklyCalories = _getWeeklyCaloriesData(products);
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Статистика'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Общая статистика
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Общая статистика',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _StatItem(
-                        label: 'Всего продуктов',
-                        value: products.length.toString(),
-                        icon: Icons.shopping_basket,
-                      ),
-                      _StatItem(
-                        label: 'Сегодня калорий',
-                        value: dailyCalories.toStringAsFixed(0),
-                        icon: Icons.local_fire_department,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _StatItem(
-                        label: 'Свежих',
-                        value: freshCount.toString(),
-                        icon: Icons.check_circle,
-                        color: Colors.green,
-                      ),
-                      _StatItem(
-                        label: 'Истекают',
-                        value: expiringCount.toString(),
-                        icon: Icons.warning,
-                        color: Colors.orange,
-                      ),
-                      _StatItem(
-                        label: 'Просрочено',
-                        value: expiredCount.toString(),
-                        icon: Icons.error,
-                        color: Colors.red,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                final cubit = context.read<StatsCubit>();
+                cubit.refreshStats(
+                  products: provider.products,
+                  dailyCalories: provider.dailyCalories,
+                );
+              },
+              tooltip: 'Обновить статистику',
             ),
-          ),
+          ],
+        ),
+        body: BlocBuilder<StatsCubit, StatsState>(
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
 
-          const SizedBox(height: 20),
+            if (state.error != null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text(
+                      state.error!,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            }
 
-          // График калорий
-          Card(
-            child: CaloriesChart(
-              caloriesData: weeklyCalories,
-              chartColor: Colors.orange,
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Диаграмма категорий
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Распределение по категориям',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 200,
-                    child: PieChart(
-                      PieChartData(
-                        sections: _buildPieChartData(categoryStats, products),
-                        centerSpaceRadius: 40,
+            if (provider.products.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.analytics, size: 64, color: Colors.grey.shade300),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Нет данных для статистики',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey.shade600,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Список категорий
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Детали по категориям',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  ...categoryStats.entries.map((entry) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      children: [
-                        Expanded(child: Text(entry.key)),
-                        Text('${entry.value} продуктов'),
-                      ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Добавьте продукты в холодильник',
+                      style: TextStyle(color: Colors.grey.shade500),
                     ),
-                  )),
-                ],
-              ),
-            ),
-          ),
-        ],
+                  ],
+                ),
+              );
+            }
+
+            return _StatsContent(state: state);
+          },
+        ),
       ),
     );
   }
+}
 
-  Map<String, int> _calculateCategoryStats(List<Product> products) {
-    final Map<String, int> stats = {};
-    for (final category in AppConstants.categories) {
-      stats[category] = 0;
-    }
+class _StatsContent extends StatelessWidget {
+  final StatsState state;
 
-    for (final product in products) {
-      stats[product.category] = (stats[product.category] ?? 0) + 1;
-    }
+  const _StatsContent({required this.state});
 
-    return stats;
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Общая статистика
+        Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Общая статистика',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _StatItem(
+                      label: 'Всего продуктов',
+                      value: (state.expiredCount +
+                          state.expiringSoonCount +
+                          state.freshCount)
+                          .toString(),
+                      icon: Icons.shopping_basket,
+                    ),
+                    _StatItem(
+                      label: 'Сегодня калорий',
+                      value: state.dailyCalories.toStringAsFixed(0),
+                      icon: Icons.local_fire_department,
+                    ),
+                    _StatItem(
+                      label: 'Общие калории',
+                      value: state.totalCalories.toStringAsFixed(0),
+                      icon: Icons.calculate,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // График калорий
+        CaloriesChart(
+          caloriesData: state.weeklyCalories,
+          chartColor: Colors.orange,
+        ),
+
+        const SizedBox(height: 20),
+
+        // Статус продуктов
+        Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Статус продуктов',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _StatusIndicator(
+                      count: state.freshCount,
+                      total: state.expiredCount +
+                          state.expiringSoonCount +
+                          state.freshCount,
+                      label: 'Свежие',
+                      color: AppColors.normal,
+                    ),
+                    _StatusIndicator(
+                      count: state.expiringSoonCount,
+                      total: state.expiredCount +
+                          state.expiringSoonCount +
+                          state.freshCount,
+                      label: 'Истекают',
+                      color: AppColors.expiringSoon,
+                    ),
+                    _StatusIndicator(
+                      count: state.expiredCount,
+                      total: state.expiredCount +
+                          state.expiringSoonCount +
+                          state.freshCount,
+                      label: 'Просрочены',
+                      color: AppColors.expired,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Диаграмма категорий
+        Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Распределение по категориям',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 200,
+                  child: PieChart(
+                    PieChartData(
+                      sections: _buildPieChartData(state.categoryStats),
+                      centerSpaceRadius: 40,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Список категорий
+        Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Детали по категориям',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                ...state.categoryStats.entries.map(
+                      (entry) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: AppColors.categoryColors[entry.key] ??
+                                Colors.grey,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(entry.key)),
+                        Text(
+                          '${entry.value} продуктов',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
-  List<PieChartSectionData> _buildPieChartData(Map<String, int> stats, List<Product> products) {
-    final total = products.length;
+  List<PieChartSectionData> _buildPieChartData(Map<String, int> stats) {
+    final total = stats.values.fold(0, (sum, value) => sum + value);
     if (total == 0) return [];
 
     final colors = [
@@ -216,7 +302,7 @@ class StatsScreen extends StatelessWidget {
     ];
 
     int colorIndex = 0;
-    return stats.entries.where((entry) => entry.value > 0).map((entry) {
+    return stats.entries.map((entry) {
       final percentage = (entry.value / total) * 100;
       return PieChartSectionData(
         color: colors[colorIndex++ % colors.length],
@@ -230,11 +316,6 @@ class StatsScreen extends StatelessWidget {
         ),
       );
     }).toList();
-  }
-
-  List<double> _getWeeklyCaloriesData(List<Product> products) {
-    // Демо-данные для графика (последние 7 дней)
-    return [1200, 1400, 1800, 1600, 2000, 1700, 1560];
   }
 }
 
@@ -264,6 +345,65 @@ class _StatItem extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatusIndicator extends StatelessWidget {
+  final int count;
+  final int total;
+  final String label;
+  final Color color;
+
+  const _StatusIndicator({
+    required this.count,
+    required this.total,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final percentage = total > 0 ? (count / total * 100).toInt() : 0;
+
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 60,
+              height: 60,
+              child: CircularProgressIndicator(
+                value: total > 0 ? count / total : 0,
+                strokeWidth: 8,
+                color: color,
+                backgroundColor: Colors.grey.shade200,
+              ),
+            ),
+            Text(
+              '$count',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        Text(
+          '$percentage%',
+          style: TextStyle(
+            fontSize: 10,
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );

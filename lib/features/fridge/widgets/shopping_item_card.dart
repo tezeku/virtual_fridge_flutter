@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/app_colors.dart';
+
 class ShoppingItemCard extends StatelessWidget {
   final String name;
   final String category;
@@ -31,7 +33,7 @@ class ShoppingItemCard extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: _getCategoryColor(category),
+            color: AppColors.categoryColors[category] ?? Colors.blue,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
@@ -45,7 +47,8 @@ class ShoppingItemCard extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            decoration: isBought ? TextDecoration.lineThrough : TextDecoration.none,
+            decoration:
+            isBought ? TextDecoration.lineThrough : TextDecoration.none,
             color: isBought ? Colors.grey : Colors.black,
           ),
         ),
@@ -78,7 +81,9 @@ class ShoppingItemCard extends StatelessWidget {
                 color: isBought ? Colors.green : Colors.grey,
               ),
               onPressed: onToggleBought,
-              tooltip: isBought ? 'Отметить как некупленное' : 'Отметить как купленное',
+              tooltip: isBought
+                  ? 'Отметить как некупленное'
+                  : 'Отметить как купленное',
             ),
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
@@ -92,31 +97,24 @@ class ShoppingItemCard extends StatelessWidget {
     );
   }
 
-  Color _getCategoryColor(String category) {
-    final colors = {
-      'Молочные продукты': Colors.blue,
-      'Овощи': Colors.green,
-      'Фрукты': Colors.orange,
-      'Мясо': Colors.red,
-      'Рыба': Colors.cyan,
-      'Бакалея': Colors.brown,
-      'Напитки': Colors.purple,
-      'Другое': Colors.grey,
-    };
-    return colors[category] ?? Colors.blue;
-  }
-
   IconData _getCategoryIcon(String category) {
-    final icons = {
-      'Молочные продукты': Icons.local_drink,
-      'Овощи': Icons.eco,
-      'Фрукты': Icons.apple,
-      'Мясо': Icons.set_meal,
-      'Рыба': Icons.set_meal,
-      'Бакалея': Icons.bakery_dining,
-      'Напитки': Icons.local_cafe,
-      'Другое': Icons.shopping_basket,
-    };
-    return icons[category] ?? Icons.shopping_basket;
+    switch (category) {
+      case 'Молочные продукты':
+        return Icons.local_drink;
+      case 'Овощи':
+        return Icons.eco;
+      case 'Фрукты':
+        return Icons.apple;
+      case 'Мясо':
+        return Icons.set_meal;
+      case 'Рыба':
+        return Icons.set_meal;
+      case 'Бакалея':
+        return Icons.bakery_dining;
+      case 'Напитки':
+        return Icons.local_cafe;
+      default:
+        return Icons.shopping_basket;
+    }
   }
 }

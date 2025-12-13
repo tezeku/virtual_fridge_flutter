@@ -1,18 +1,47 @@
 import 'package:flutter/material.dart';
-import 'features/fridge/fridge_container.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'app_router.dart';
+import 'features/auth/auth_cubit.dart';
+import 'features/fridge/fridge_data_provider.dart';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class VirtualFridgeApp extends StatelessWidget {
+  const VirtualFridgeApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Виртуальный холодильник',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => AuthCubit()),
+      ],
+      child: FridgeDataScope(
+        child: MaterialApp.router(
+          title: 'Виртуальный холодильник',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+            useMaterial3: true,
+            appBarTheme: const AppBarTheme(
+              centerTitle: true,
+              elevation: 2,
+            ),
+            inputDecorationTheme: const InputDecorationTheme(
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            ),
+          ),
+          darkTheme: ThemeData.dark().copyWith(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.blue,
+              brightness: Brightness.dark,
+            ),
+            appBarTheme: const AppBarTheme(
+              centerTitle: true,
+              elevation: 2,
+            ),
+          ),
+          routerConfig: AppRouter().router,
+          debugShowCheckedModeBanner: false,
+        ),
       ),
-      home: const FridgeContainer(),
     );
   }
 }
