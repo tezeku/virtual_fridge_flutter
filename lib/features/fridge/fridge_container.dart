@@ -3,14 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:my_flutter_project/features/fridge/screens/add_product_screen.dart';
 import 'package:my_flutter_project/features/fridge/screens/fridge_screen.dart';
-
 import 'cubit/fridge_cubit.dart';
 import 'cubit/fridge_state.dart';
 import 'cubit/settings_cubit.dart';
 import 'cubit/shopping_cubit.dart';
-import 'models/product.dart';
 
-enum FridgeScreenType { fridge, addProduct, editProduct }
+enum FridgeScreenType { fridge, addProduct, editProduct, consume }
 
 class FridgeContainer extends StatefulWidget {
   const FridgeContainer({super.key});
@@ -21,12 +19,10 @@ class FridgeContainer extends StatefulWidget {
 
 class _FridgeContainerState extends State<FridgeContainer> {
   FridgeScreenType _currentScreen = FridgeScreenType.fridge;
-  Product? _productToEdit;
 
   void _showFridge() {
     setState(() {
       _currentScreen = FridgeScreenType.fridge;
-      _productToEdit = null;
     });
   }
 
@@ -34,21 +30,8 @@ class _FridgeContainerState extends State<FridgeContainer> {
     setState(() => _currentScreen = FridgeScreenType.addProduct);
   }
 
-  void _editProduct(Product product) {
-    setState(() {
-      _currentScreen = FridgeScreenType.editProduct;
-      _productToEdit = product;
-    });
-  }
-
-  void _addProduct(Product product) {
-    context.read<FridgeCubit>().addProduct(product);
-    _showFridge();
-  }
-
-  void _updateProduct(Product product) {
-    context.read<FridgeCubit>().updateProduct(product);
-    _showFridge();
+  void _showConsumeProduct() {
+    setState(() => _currentScreen = FridgeScreenType.consume);
   }
 
   void _consumeProduct(String productId, double quantity) {
@@ -70,11 +53,11 @@ class _FridgeContainerState extends State<FridgeContainer> {
 
     final buyQuantity = product.quantity;
     context.read<ShoppingCubit>().addOrIncreaseItem(
-          name: product.name,
-          category: product.category,
-          unit: product.unit,
-          quantity: buyQuantity,
-        );
+      name: product.name,
+      category: product.category,
+      unit: product.unit,
+      quantity: buyQuantity,
+    );
   }
 
   void _deleteProduct(String productId) {
@@ -103,26 +86,21 @@ class _FridgeContainerState extends State<FridgeContainer> {
           case FridgeScreenType.fridge:
             return FridgeScreen(
               products: state.products,
-              onAddProduct: _showAddProduct,
+              onAddProduct: () => context.go('/fridge/add'),
               onConsumeProduct: _consumeProduct,
               onDeleteProduct: _deleteProduct,
-              onEditProduct: _editProduct,
+              onEditProduct: (product) => context.go('/fridge/edit/${product.id}'),
               onShowStats: () => context.go('/fridge/stats'),
               onShowShopping: () => context.go('/fridge/shopping'),
               onShowSettings: () => context.go('/fridge/settings'),
               totalCalories: state.dailyCalories,
             );
           case FridgeScreenType.addProduct:
-            return AddProductScreen(
-              onSave: _addProduct,
-              onCancel: _showFridge,
-            );
+            return const AddProductScreen();
           case FridgeScreenType.editProduct:
-            return AddProductScreen(
-              product: _productToEdit,
-              onSave: _updateProduct,
-              onCancel: _showFridge,
-            );
+            return const SizedBox.shrink();
+          case FridgeScreenType.consume:
+            return const SizedBox.shrink();
         }
       },
     );

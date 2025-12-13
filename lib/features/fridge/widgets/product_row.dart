@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../../shared/app_colors.dart';
 import '../models/product.dart';
 
@@ -182,14 +183,13 @@ class ProductRow extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: const Icon(Icons.restaurant,
-                    color: Colors.blue),
+                icon: const Icon(Icons.restaurant, color: Colors.blue),
                 onPressed: () => _showConsumeDialog(context),
                 tooltip: 'Съесть',
               ),
               IconButton(
                 icon: const Icon(Icons.edit, color: Colors.orange),
-                onPressed: onEdit,
+                onPressed: () => context.go('/fridge/edit/${product.id}'),
                 tooltip: 'Редактировать',
               ),
               IconButton(

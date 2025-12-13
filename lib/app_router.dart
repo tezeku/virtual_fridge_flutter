@@ -7,6 +7,9 @@ import 'features/fridge/fridge_container.dart';
 import 'features/fridge/screens/stats_screen.dart';
 import 'features/fridge/screens/shopping_screen.dart';
 import 'features/fridge/screens/settings_screen.dart';
+import 'features/fridge/screens/add_product_screen.dart';
+import 'features/fridge/screens/edit_product_screen.dart';
+import 'features/fridge/screens/consume_product_screen.dart';
 
 class AppRouter {
   late final GoRouter router;
@@ -46,6 +49,33 @@ class AppRouter {
             child: const FridgeContainer(),
           ),
           routes: [
+            GoRoute(
+              path: 'add',
+              name: 'add',
+              pageBuilder: (context, state) => MaterialPage(
+                key: state.pageKey,
+                child: const AddProductScreen(),
+              ),
+            ),
+            GoRoute(
+              path: 'edit/:id',
+              name: 'edit',
+              pageBuilder: (context, state) {
+                final id = state.pathParameters['id']!;
+                return MaterialPage(
+                  key: state.pageKey,
+                  child: EditProductScreen(productId: id),
+                );
+              },
+            ),
+            GoRoute(
+              path: 'consume',
+              name: 'consume',
+              pageBuilder: (context, state) => MaterialPage(
+                key: state.pageKey,
+                child: const ConsumeProductScreen(),
+              ),
+            ),
             GoRoute(
               path: 'stats',
               name: 'stats',

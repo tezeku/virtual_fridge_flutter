@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../models/product.dart';
 import '../widgets/products_list.dart';
 
@@ -37,6 +38,11 @@ class FridgeScreen extends StatelessWidget {
         title: const Text('Мой холодильник'),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.restaurant),
+            onPressed: () => context.go('/fridge/consume'),
+            tooltip: 'Учет потребления',
+          ),
           IconButton(
             icon: const Icon(Icons.shopping_cart),
             onPressed: onShowShopping,
@@ -104,7 +110,7 @@ class FridgeScreen extends StatelessWidget {
                       child: _QuickAccessButton(
                         icon: Icons.add,
                         label: 'Добавить',
-                        onTap: onAddProduct,
+                        onTap: () => context.go('/fridge/add'),
                       ),
                     ),
                   ],
@@ -118,13 +124,13 @@ class FridgeScreen extends StatelessWidget {
               products: products,
               onConsume: onConsumeProduct,
               onDelete: onDeleteProduct,
-              onEdit: onEditProduct,
+              onEdit: (product) => context.go('/fridge/edit/${product.id}'),
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: onAddProduct,
+        onPressed: () => context.go('/fridge/add'),
         tooltip: 'Добавить продукт',
         icon: const Icon(Icons.add),
         label: const Text('Добавить'),
